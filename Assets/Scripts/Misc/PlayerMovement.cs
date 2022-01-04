@@ -61,7 +61,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 case CoverDirection.NORTH:
                     transform.position = new Vector3(transform.position.x, transform.position.y, tempMovement.z > 0 ? transform.position.z : _cover.Maximum.z);
-                    _characterController.SimpleMove(new Vector3(tempMovement.z == 0 ? tempMovement.x : 0, 0, tempMovement.z > 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
+                    _characterController.SimpleMove(new Vector3(tempMovement.z <= 0 ? tempMovement.x : 0, 0, tempMovement.z > 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
                     _facingDirection = Vector3.back;
 
                     _characterModel.SetFloat("MoveSideways", Mathf.Lerp(_characterModel.GetFloat("MoveSideways"), -Input.GetAxisRaw("Horizontal"), Time.deltaTime * _lookSpeed));
@@ -69,7 +69,7 @@ public class PlayerMovement : MonoBehaviour
                     break;
                 case CoverDirection.SOUTH:
                     transform.position = new Vector3(transform.position.x, transform.position.y, tempMovement.z < 0 ? transform.position.z : _cover.Minimum.z);
-                    _characterController.SimpleMove(new Vector3(tempMovement.z == 0 ? tempMovement.x : 0, 0, tempMovement.z < 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
+                    _characterController.SimpleMove(new Vector3(tempMovement.z >= 0 ? tempMovement.x : 0, 0, tempMovement.z < 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
                     _facingDirection = Vector3.forward;
 
                     _characterModel.SetFloat("MoveSideways", Mathf.Lerp(_characterModel.GetFloat("MoveSideways"), Input.GetAxisRaw("Horizontal"), Time.deltaTime * _lookSpeed));
@@ -77,7 +77,7 @@ public class PlayerMovement : MonoBehaviour
                     break;
                 case CoverDirection.EAST:
                     transform.position = new Vector3(tempMovement.x > 0 ? transform.position.x : _cover.Maximum.x, transform.position.y, transform.position.z);
-                    _characterController.SimpleMove(new Vector3(tempMovement.x > 0 ? tempMovement.x : 0, 0, tempMovement.x == 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
+                    _characterController.SimpleMove(new Vector3(tempMovement.x > 0 ? tempMovement.x : 0, 0, tempMovement.x <= 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
                     _facingDirection = Vector3.left;
 
                     _characterModel.SetFloat("MoveSideways", Mathf.Lerp(_characterModel.GetFloat("MoveSideways"), Input.GetAxisRaw("Vertical"), Time.deltaTime * _lookSpeed));
@@ -85,7 +85,7 @@ public class PlayerMovement : MonoBehaviour
                     break;
                 case CoverDirection.WEST:
                     transform.position = new Vector3(tempMovement.x < 0 ? transform.position.x : _cover.Minimum.x, transform.position.y, transform.position.z);
-                    _characterController.SimpleMove(new Vector3(tempMovement.x < 0 ? tempMovement.x : 0, 0, tempMovement.x == 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
+                    _characterController.SimpleMove(new Vector3(tempMovement.x < 0 ? tempMovement.x : 0, 0, tempMovement.x >= 0 ? tempMovement.z : 0) * (Speed + (_isCrouching ? -1 : 0)));
                     _facingDirection = Vector3.right;
 
                     _characterModel.SetFloat("MoveSideways", Mathf.Lerp(_characterModel.GetFloat("MoveSideways"), -Input.GetAxisRaw("Vertical"), Time.deltaTime * _lookSpeed));
