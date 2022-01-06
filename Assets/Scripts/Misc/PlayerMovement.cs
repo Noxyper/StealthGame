@@ -13,7 +13,7 @@ public class PlayerMovement : MonoBehaviour
     [Space] [SerializeField] float _speed;
     [SerializeField] float _lookSpeed;
     bool _isCrouching;
-    Vector3 _facingDirection;
+    Vector3 _facingDirection = Vector3.forward;
     Vector3 _cameraDefaultPosition;
 
     internal Cover _cover;
@@ -28,8 +28,6 @@ public class PlayerMovement : MonoBehaviour
     
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.X)) _characterModel.SetTrigger("yes");
-
         _isCrouching = _isCrouching ^ Input.GetKeyDown(KeyCode.LeftControl);
         _characterModel.SetBool("Crouching", _isCrouching);
 
