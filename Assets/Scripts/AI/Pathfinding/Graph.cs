@@ -6,8 +6,9 @@ using UnityEngine;
 public class Graph : MonoBehaviour
 {
     public List<GraphNode> nodes = new List<GraphNode>();
+	public LayerMask ignoreRaycastLayers;
 
-	public int FindNearestNode(Vector3 position)
+	public int FindNearestNode(Vector3 position, bool tryForWalls = true)
     {
 		GraphNode tempNearestNode = null;
 		float tempMinimumDistance = Mathf.Infinity;
@@ -15,11 +16,15 @@ public class Graph : MonoBehaviour
 		foreach(GraphNode tempNode in nodes)
         {
 			float tempDistance = (tempNode.transform.position - position).magnitude;
-			if(tempDistance < tempMinimumDistance)
-            {
-				tempNearestNode = tempNode;
-				tempMinimumDistance = tempDistance;
-            }
+
+			if (!tryForWalls || (tryForWalls && !Physics.Raycast(position, (tempNode.transform.position - position), tempDistance, ~ignoreRaycastLayers)))
+			{
+				if (tempDistance < tempMinimumDistance)
+				{
+					tempNearestNode = tempNode;
+					tempMinimumDistance = tempDistance;
+				}
+			}
         }
 		return tempNearestNode.nodeIndex;
     }

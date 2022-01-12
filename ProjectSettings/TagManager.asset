@@ -18,10 +18,10 @@ TagManager:
   - UI
   - Cover
   - Walls
+  - HidingPlace
+  - Player
   - Guard
-  - 
-  - 
-  - 
+  - AlertedGuard
   - 
   - 
   - 

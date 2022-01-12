@@ -32,17 +32,17 @@ public class AIAgent : MonoBehaviour
     public float mass = 1f;
     public float maxSpeed = 3f;
     [Space]
-    [SerializeField] Animator _characterModel;
     [SerializeField] float _lookSpeed;
 
-    Vector3 _agentVelocity;
     AIState _aiState;
     CharacterController _characterController;
     float _timer = 0;
     bool _timerSet = false;
     Vector3 _steeringForce;
     bool _switchDirection = false;
-    
+
+    internal Vector3 _agentVelocity;
+
     [Header("Patrolling Variables")]
     public List<Waypoint> patrollingWaypoints;
     public bool pingPongPatrol;
@@ -54,6 +54,10 @@ public class AIAgent : MonoBehaviour
     [Header("Standing Guard Variables")]
     public Quaternion lookoutFromAngle;
     public Quaternion lookoutToAngle;
+
+    internal Vector3 _lookAtPosition;
+    internal Vector3 _lookAtEuler;
+    internal float _lookAtWeight = 1f;
 
     [Header("Investigating/Alerted Variables")]
     public StatusDisplay investigatingDisplayInfo;
@@ -99,6 +103,7 @@ public class AIAgent : MonoBehaviour
         _pathfindingGraph = FindObjectOfType<Graph>();
         _homePosition = _pathfindingGraph.nodes[_pathfindingGraph.FindNearestNode(transform.position)].transform.position;
         _oois = new Queue<GameObject>();
+        if(defaultAIState == AIState.STANDING_GUARD) transform.rotation = Quaternion.Lerp(lookoutFromAngle, lookoutToAngle, 0.5f);
     }
 
     void Update()
@@ -108,7 +113,9 @@ public class AIAgent : MonoBehaviour
         switch (_aiState)
         {
             case AIState.PATROLLING:
+                gameObject.layer = LayerMask.NameToLayer("Guard");
                 behaviourStatus.enabled = false;
+                _lookAtWeight = 0f;
 
                 if ((patrollingWaypoints[_currentWaypointIndex].node.transform.position - transform.position).magnitude < waypointDetectionDistance && !_timerSet)
                 {
@@ -134,7 +141,9 @@ public class AIAgent : MonoBehaviour
 
                 break;
             case AIState.STANDING_GUARD:
+                gameObject.layer = LayerMask.NameToLayer("Guard");
                 behaviourStatus.enabled = false;
+                _lookAtWeight = 1f;
 
                 if (!_timerSet)
                 {
@@ -143,31 +152,34 @@ public class AIAgent : MonoBehaviour
                 }
 
                 _agentVelocity = Vector3.zero;
-                if (Quaternion.Angle(transform.rotation, lookoutToAngle) <= Quaternion.Angle(lookoutFromAngle, lookoutToAngle) &&
-                   Quaternion.Angle(transform.rotation, lookoutFromAngle) <= Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
+
+                if (Quaternion.Angle(Quaternion.Euler(_lookAtEuler), lookoutToAngle) <= Quaternion.Angle(lookoutFromAngle, lookoutToAngle) &&
+                   Quaternion.Angle(Quaternion.Euler(_lookAtEuler), lookoutFromAngle) <= Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
                 {
-                    transform.rotation = Quaternion.Slerp(_switchDirection ? lookoutToAngle : lookoutFromAngle,
-                                                          _switchDirection ? lookoutFromAngle : lookoutToAngle,
-                                                          Mathf.SmoothStep(0f, 1f, 1f - (_timer / 5f)));
+                    _lookAtEuler = Quaternion.Slerp(_switchDirection ? lookoutFromAngle : lookoutToAngle, _switchDirection ? lookoutToAngle : lookoutFromAngle, Mathf.SmoothStep(0f, 1f, 1f - (_timer / 5f))).eulerAngles;
                 }
-                else if (Quaternion.Angle(transform.rotation, lookoutToAngle) > Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
+                else if (Quaternion.Angle(Quaternion.Euler(_lookAtEuler), lookoutToAngle) > Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
                 {
                     _timerSet = false;
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, lookoutFromAngle.eulerAngles.y - 10f, 0), Time.deltaTime);
+                    _lookAtEuler = Quaternion.Slerp(Quaternion.Euler(0, _lookAtEuler.y, 0), Quaternion.Euler(0, lookoutFromAngle.eulerAngles.y + 10f, 0), Time.deltaTime).eulerAngles;
                 }
-                else if (Quaternion.Angle(transform.rotation, lookoutFromAngle) > Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
+                else if (Quaternion.Angle(Quaternion.Euler(_lookAtEuler), lookoutFromAngle) > Quaternion.Angle(lookoutFromAngle, lookoutToAngle))
                 {
                     _timerSet = false;
-                    transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0, lookoutToAngle.eulerAngles.y - 10f, 0), Time.deltaTime);
+                    _lookAtEuler = Quaternion.Slerp(Quaternion.Euler(0, _lookAtEuler.y, 0), Quaternion.Euler(0, lookoutToAngle.eulerAngles.y - 10f, 0), Time.deltaTime).eulerAngles;
                 }
 
+                _lookAtPosition = transform.position + new Vector3(Mathf.Sin(_lookAtEuler.y * Mathf.Deg2Rad), 0, Mathf.Cos(_lookAtEuler.y * Mathf.Deg2Rad)) * agentPerception.sightRadius;
+                
                 if (_timerSet && _timer <= 0)
                 {
                     _switchDirection = !_switchDirection;
                 }
                 break;
             case AIState.INVESTIGATING:
+                gameObject.layer = LayerMask.NameToLayer("Guard");
                 if (!_currentlySearchingFor) _currentlySearchingFor = _oois.Dequeue();
+                _lookAtWeight = 0f;
 
                 if (!_timerSet)
                 {
@@ -201,7 +213,10 @@ public class AIAgent : MonoBehaviour
                                                                                                                  agentPerception._fovMesh._viewMeshFilter.GetComponent<MeshRenderer>().material.color.a);
                 break;
             case AIState.ALERTED:
+                gameObject.layer = LayerMask.NameToLayer("AlertedGuard");
                 agentPerception.sightRadiusModifier = agentPerception.sightFocusedModifier;
+                _lookAtWeight = 0f;
+
                 if (!_timerSet)
                 {
                     _timer = _passiveOOITimers[_currentlySearchingFor] / 2;
@@ -234,19 +249,27 @@ public class AIAgent : MonoBehaviour
                                                                                                                  agentPerception._fovMesh._viewMeshFilter.GetComponent<MeshRenderer>().material.color.a);
                 break;
             case AIState.SEARCHING:
+                gameObject.layer = LayerMask.NameToLayer("Guard");
+                _lookAtWeight = 0f;
 
                 if ((_pathfindingGraph.nodes[_searchNode].transform.position - transform.position).magnitude < waypointDetectionDistance)
                 {
                     int tempInvestigateNearby = Random.Range(0, _pathfindingGraph.nodes[_searchNode].adjacencyList.Count - 1);
-                    print(tempInvestigateNearby);
                     List<GraphEdge> tempList = _pathfindingGraph.nodes[_searchNode].adjacencyList.Where(x => x.toNodeIndex != _prevSearchNode && x.toNodeIndex != _searchNode).ToList();
-                    print(tempList.Count + " " + tempList[tempInvestigateNearby].toNodeIndex);
-                    print(_searchNode + " " + _prevSearchNode);
-                    print("-------------");
-
-                    int tempSearch = tempList[tempInvestigateNearby].toNodeIndex;
-                    _prevSearchNode = _searchNode;
-                    _searchNode = tempSearch;
+                    int tempSearch;
+                    
+                    if (tempList.Any())
+                    {
+                        tempSearch = tempList[tempInvestigateNearby].toNodeIndex;
+                        _prevSearchNode = _searchNode;
+                        _searchNode = tempSearch;
+                    }
+                    else
+                    {
+                        tempSearch = _prevSearchNode;
+                        _prevSearchNode = _searchNode;
+                        _searchNode = tempSearch;
+                    }
                 }
                 else
                 {
@@ -264,12 +287,19 @@ public class AIAgent : MonoBehaviour
                                                                                                                  agentPerception._fovMesh._viewMeshFilter.GetComponent<MeshRenderer>().material.color.a);
                 break;
             case AIState.RETURN_HOME:
-                if ((_pathfindingGraph.nodes[_homePathNodes[_homePathNextNode]].transform.position - transform.position).magnitude < waypointDetectionDistance)
+                gameObject.layer = LayerMask.NameToLayer("Guard");
+                _lookAtWeight = 0f;
+
+                if (_homePathNodes.Any()) 
                 {
-                    _homePathNextNode++;
-                    if (_homePathNextNode >= _homePathNodes.Count)
+                    if ((_pathfindingGraph.nodes[_homePathNodes[_homePathNextNode]].transform.position - transform.position).magnitude < waypointDetectionDistance)
                     {
-                        _aiState = defaultAIState;
+                        _homePathNextNode++;
+                        if (_homePathNextNode >= _homePathNodes.Count)
+                        {
+                            _aiState = defaultAIState;
+                            if (defaultAIState == AIState.STANDING_GUARD) transform.rotation = Quaternion.Lerp(lookoutFromAngle, lookoutToAngle, 0.5f);
+                        }
                     }
                 }
 
@@ -313,6 +343,20 @@ public class AIAgent : MonoBehaviour
 
         if (_timer > 0) _timer -= Time.deltaTime;
         else _timerSet = false;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if(_aiState == AIState.ALERTED && (LayerMask.GetMask("Player") == (LayerMask.GetMask("Player") | (1 << other.gameObject.layer))))
+        {
+            FindObjectOfType<GameManager>().EndGame(false);
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(_lookAtPosition, 0.1f);
     }
 
     void ApplyMotion()

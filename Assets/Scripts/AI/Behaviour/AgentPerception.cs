@@ -141,19 +141,18 @@ public class AgentPerception : MonoBehaviour
                 if (aiAgent._ooiCurrentlyVisible.ContainsKey(go)) aiAgent._ooiCurrentlyVisible[go] = false;
             }
 
-            print(string.Format("--- {0} ---\nVisible? {1} Focused? {2}\nPassive: {3}\nActive: {4}\n{5}",
-                                aiAgent.name,
-                                aiAgent._ooiCurrentlyVisible.ContainsKey(go) ? aiAgent._ooiCurrentlyVisible[go].ToString() : "N/A",
-                                aiAgent._ooiCurrentlyFocused.ContainsKey(go) ? aiAgent._ooiCurrentlyFocused[go].ToString() : "N/A",
-                                aiAgent._passiveOOITimers.ContainsKey(go) ? aiAgent._passiveOOITimers[go].ToString() : "N/A",
-                                aiAgent._activeOOITimers.ContainsKey(go) ? aiAgent._activeOOITimers[go].ToString() : "N/A",
-                                aiAgent._lastKnownOOIPosition.ContainsKey(go) ? aiAgent._lastKnownOOIPosition[go].ToString() : "N/A"));
+            //print(string.Format("--- {0} ---\nVisible? {1} Focused? {2}\nPassive: {3}\nActive: {4}\n{5}",
+            //                    aiAgent.name,
+            //                    aiAgent._ooiCurrentlyVisible.ContainsKey(go) ? aiAgent._ooiCurrentlyVisible[go].ToString() : "N/A",
+            //                    aiAgent._ooiCurrentlyFocused.ContainsKey(go) ? aiAgent._ooiCurrentlyFocused[go].ToString() : "N/A",
+            //                    aiAgent._passiveOOITimers.ContainsKey(go) ? aiAgent._passiveOOITimers[go].ToString() : "N/A",
+            //                    aiAgent._activeOOITimers.ContainsKey(go) ? aiAgent._activeOOITimers[go].ToString() : "N/A",
+            //                    aiAgent._lastKnownOOIPosition.ContainsKey(go) ? aiAgent._lastKnownOOIPosition[go].ToString() : "N/A"));
         }
     }
 
     void LateUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.X)) _fovMesh._focusedFOV = !_fovMesh._focusedFOV;
         _fovMesh.DrawFieldOfView();
     }
 
