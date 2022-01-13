@@ -17,6 +17,8 @@ public class GuardAnimation : MonoBehaviour
     void Update()
     {
         _animator.SetFloat("Speed", aiAgent._agentVelocity.magnitude);
+        if (aiAgent._aiState == AIState.ALERTED) _animator.speed = 1.666666f;
+        else _animator.speed = 1f;
     }
 
     void OnAnimatorIK()

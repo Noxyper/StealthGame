@@ -30,17 +30,17 @@ public class AIAgent : MonoBehaviour
     public AgentPerception agentPerception;
     public AIState defaultAIState = AIState.PATROLLING;
     public float mass = 1f;
-    public float maxSpeed = 3f;
+    public float patrollingSpeed = 3f;
     [Space]
     [SerializeField] float _lookSpeed;
-
-    AIState _aiState;
+        
     CharacterController _characterController;
     float _timer = 0;
     bool _timerSet = false;
     Vector3 _steeringForce;
     bool _switchDirection = false;
 
+    internal AIState _aiState { get; private set; }
     internal Vector3 _agentVelocity;
 
     [Header("Patrolling Variables")]
@@ -64,6 +64,7 @@ public class AIAgent : MonoBehaviour
     public StatusDisplay alertedDisplayInfo;
     public StatusDisplay searchingDisplayInfo;
     [Space]
+    public float alertedSpeed = 5f;
     public float memoryLength = 5f;
     [Tooltip("The increased length in seconds of the passive timer")]
     public float attentionLengthModifier = 5f;
@@ -130,7 +131,7 @@ public class AIAgent : MonoBehaviour
                 }
                 else
                 {
-                    _steeringForce = ((patrollingWaypoints[_currentWaypointIndex].node.transform.position - transform.position).normalized * maxSpeed) - _agentVelocity;
+                    _steeringForce = ((patrollingWaypoints[_currentWaypointIndex].node.transform.position - transform.position).normalized * patrollingSpeed) - _agentVelocity;
                     ApplyMotion();
                 }
 
@@ -200,7 +201,7 @@ public class AIAgent : MonoBehaviour
                 }
                 else
                 {
-                    _steeringForce = ((_lastKnownOOIPosition[_currentlySearchingFor] - transform.position).normalized * maxSpeed) - _agentVelocity;
+                    _steeringForce = ((_lastKnownOOIPosition[_currentlySearchingFor] - transform.position).normalized * patrollingSpeed) - _agentVelocity;
                     ApplyMotion();
                 }
                 behaviourStatus.enabled = true;
@@ -236,8 +237,8 @@ public class AIAgent : MonoBehaviour
                 }
                 else
                 {
-                    _steeringForce = ((_lastKnownOOIPosition[_currentlySearchingFor] - transform.position).normalized * maxSpeed) - _agentVelocity;
-                    ApplyMotion();
+                    _steeringForce = ((_lastKnownOOIPosition[_currentlySearchingFor] - transform.position).normalized * alertedSpeed) - _agentVelocity;
+                    ApplyMotion(true);
                 }
                 behaviourStatus.enabled = true;
 
@@ -273,7 +274,7 @@ public class AIAgent : MonoBehaviour
                 }
                 else
                 {
-                    _steeringForce = ((_pathfindingGraph.nodes[_searchNode].transform.position - transform.position).normalized * maxSpeed) - _agentVelocity;
+                    _steeringForce = ((_pathfindingGraph.nodes[_searchNode].transform.position - transform.position).normalized * patrollingSpeed) - _agentVelocity;
                     ApplyMotion();
                 }
 
@@ -303,8 +304,8 @@ public class AIAgent : MonoBehaviour
                     }
                 }
 
-                if (_homePathNextNode < _homePathNodes.Count) _steeringForce = ((_pathfindingGraph.nodes[_homePathNodes[_homePathNextNode]].transform.position - transform.position).normalized * maxSpeed) - _agentVelocity;
-                else _steeringForce = ((_homePosition - transform.position).normalized * maxSpeed) - _agentVelocity;
+                if (_homePathNextNode < _homePathNodes.Count) _steeringForce = ((_pathfindingGraph.nodes[_homePathNodes[_homePathNextNode]].transform.position - transform.position).normalized * patrollingSpeed) - _agentVelocity;
+                else _steeringForce = ((_homePosition - transform.position).normalized * patrollingSpeed) - _agentVelocity;
                 ApplyMotion();
                 behaviourStatus.enabled = true;
 
@@ -359,9 +360,9 @@ public class AIAgent : MonoBehaviour
         Gizmos.DrawSphere(_lookAtPosition, 0.1f);
     }
 
-    void ApplyMotion()
+    void ApplyMotion(bool alerted = false)
     {
-        _agentVelocity += Vector3.ClampMagnitude((_steeringForce / mass) * Time.deltaTime, maxSpeed);
+        _agentVelocity += Vector3.ClampMagnitude((_steeringForce / mass) * Time.deltaTime, alerted ? alertedSpeed : patrollingSpeed);
         _facingDirection = new Vector3(_agentVelocity.x, 0, _agentVelocity.z).normalized;
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(_facingDirection, Vector3.up), Time.deltaTime * _lookSpeed);
     }

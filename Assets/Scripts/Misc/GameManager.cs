@@ -29,7 +29,7 @@ public class GameManager : MonoBehaviour
     public void EndGame(bool victoryFlag)
     {
         missionStatus.text = victoryFlag ? escapeInfo.missionStatusText : capturedInfo.missionStatusText;
-        flavourText.text = victoryFlag ? string.Format(escapeInfo.flavourText, DateTime.Now.TimeOfDay.Hours.ToString() + DateTime.Now.TimeOfDay.Minutes.ToString()) : capturedInfo.flavourText;
+        flavourText.text = victoryFlag ? string.Format(escapeInfo.flavourText, DateTime.Now.TimeOfDay.Hours.ToString("00") + DateTime.Now.TimeOfDay.Minutes.ToString("00")) : capturedInfo.flavourText;
 
         gameOverCanvas.DOFade(1f, 1f);
         _gameOver = true;
